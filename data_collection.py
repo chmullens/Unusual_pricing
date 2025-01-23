@@ -7,8 +7,8 @@ import os
 
 # NOTE: This storage method maintains visual structure, which means a ton more spaces
 # stored out than the previously-stored json objects I've added for history reference.
-# If we were paying more attention to storage capacity, we could trim that out, but
-# for now I like the added clarity.
+# If we were paying more attention to storage capacity, could trim that out, but for
+# a little project like this I like the added clarity.
 
 def store_parsed_response(parsedresponse):
     # Store out the resulting json object in a file with the time on it
@@ -51,4 +51,3 @@ response_parsed = get_priceresponse(refresh=refreshcond)
 
 # # Debug eyeball:
 # allprices = response_parsed['response']['items']
-

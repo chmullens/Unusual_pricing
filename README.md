@@ -2,6 +2,7 @@
  
 This project will focus on estimating appropriate pricing for virtual items in the Team 
 Fortress 2 video game, which has one of the oldest existing game item trading economies. 
+This is a 10-hour timeboxed project. 
 
 ### Background:
 
@@ -22,8 +23,6 @@ as a json object.
 
 Environment: Default Anaconda3
 
-Currently working on: 2-i
-
 1. Collect and perform initial data preparation
    1. Download data using personal API key
    2. Store JSON object
@@ -32,8 +31,12 @@ Currently working on: 2-i
    5. Repeat steps 3 and 4 for any previously-stored JSON objects, keeping differences
 
 2. Model preprocessing and pipeline
-   1. One-hot encode our categorical variables
-   2. Log-transform price (keeping it basic)
-   3. Generate time-weighting variable
-   4. Fit model (weighted to focus on recent prices
+   1. Log-transform price (keeping it basic)
+   2. Generate time-weighting variable
+   3. One-hot encode our categorical variables
+   4. Fit model (weighted to focus on recent prices)
+   5. Test impact of different data filtering methods
+   6. Show basic model performance
+
+TODO: Get matplotlib working in current-version PyCharm
 

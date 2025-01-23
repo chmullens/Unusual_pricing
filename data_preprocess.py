@@ -11,9 +11,9 @@ import pandas as pd
 # I am going to do a little bit of layering multiple ages of data here. This isn't strictly
 # necessary: we could just use the most recent datapoint for each item, it would be simpler,
 # but this way I can test whether we get better predictive power for the holdout set with or
-# without any added history. This will only impact items repriced within the last six months,
-# so we can do segmentation to verify whether it's helping with the full dataset or with the
-# repriced subset.
+# without any added history. This will only impact items repriced within the last six months.
+# TODO OPTIONAL: Use segmentation to verify whether the added data helps with the full
+#  dataset, only with the repriced subset, or neither
 
 # Steps:
 #  - Import most recent stored file
@@ -103,9 +103,12 @@ def convert_values(priceframe, allprice):
 
     keyinds = priceframe['Currency'] == 'keys'
     priceframe.loc[keyinds, 'Value'] = priceframe.loc[keyinds, 'Value'] * (keyprice * metalprice)
-    # No unusual items are priced using currencies other than keys or USD so far, and I assume
-    # that will continue. Possible failure point.
-    priceframe = priceframe.drop(columns='Currency')
+
+    # UPDATE: Leaving Currency column in for future debugging if needed
+
+    # # No unusual items are priced using currencies other than keys or USD so far, and I assume
+    # # that will continue. Possible failure point.
+    # priceframe = priceframe.drop(columns='Currency')
 
     return priceframe
 
