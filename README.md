@@ -22,7 +22,7 @@ as a json object.
 
 Environment: Default Anaconda3
 
-Currently working on: 1-iii
+Currently working on: 2-i
 
 1. Collect and perform initial data preparation
    1. Download data using personal API key
@@ -34,5 +34,6 @@ Currently working on: 1-iii
 2. Model preprocessing and pipeline
    1. One-hot encode our categorical variables
    2. Log-transform price (keeping it basic)
-   3. Fit model (weighted to focus on recent prices
+   3. Generate time-weighting variable
+   4. Fit model (weighted to focus on recent prices
 

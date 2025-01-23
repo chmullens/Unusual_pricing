@@ -5,6 +5,9 @@ import os
 import numpy as np
 import pandas as pd
 
+# Matplotlib bug to track down: Errors as using 'macosx' as the gui rather than the valid 'osx'
+# import matplotlib.pyplot as plt
+
 # I am going to do a little bit of layering multiple ages of data here. This isn't strictly
 # necessary: we could just use the most recent datapoint for each item, it would be simpler,
 # but this way I can test whether we get better predictive power for the holdout set with or
@@ -16,13 +19,6 @@ import pandas as pd
 #  - Import most recent stored file
 #  - Parse out individual pricing events (i.e. item, effect, price, date)
 #  - Repeat for each prior file, add unique events
-
-# Detect files
-fnames = os.listdir('Data')
-
-# TODO OPTIONAL: Move filename format below to a config file
-rawnameformat = 'Backpack_spreadsheet_'
-fnames = [name for name in fnames if name[:len(rawnameformat)] == rawnameformat]
 
 
 def price_parser(pricedict):
@@ -39,8 +35,8 @@ def price_parser(pricedict):
     unusual effects, and it steps through those effects and adds the price for each to
     the existing structure.
 
-    Possible point of failure: Type check for dictionary in second conditional, looks
-    like it works fine for now but may not be future-proof.
+    Possible point of failure: Type check for dictionary in second conditional works
+    fine for now, but may not be future-proof.
 
     Input: Pricing object
     Output: List of pricing events
@@ -67,10 +63,94 @@ def price_parser(pricedict):
     return unusualprices
 
 
-# Load in example file TODO: CONVERT TO LOOP AFTER DEDUPLICATION
-with open(os.path.join('Data', fnames[0]), 'r') as f:
-    response_parsed = json.loads(f.read())
+def price_loader(filename):
+    with open(os.path.join('Data', filename), 'r') as f:
+        response_parsed = json.loads(f.read())
 
-# Parse our example case:
-allprices = response_parsed['response']['items']
-price_events = price_parser(allprices)
+    # Parse prices from our example case:
+    allprice = response_parsed['response']['items']
+
+    price_events = price_parser(allprice)
+
+    priceframe = pd.DataFrame(price_events,
+                              columns=['Itemname', 'Effectnum', 'Unixtime', 'Currency', 'Value'])
+
+    return priceframe, allprice
+
+
+def convert_values(priceframe, allprice):
+    """
+    Some prices are defined in "keys", a standard in-game currency, while others are in "usd",
+    standard US dollars. To convert all prices to USD, I'll be using the value of keys in
+    refined metal, and the value of refined metal in USD, both from the full allprice object.
+
+    Note: Price suggestions are typically "accepted" on backpack.tf in number of keys, but
+    since I am prioritizing ease of interpretation, I'm converting to USD. This will mean
+    mild added complexity on the deduplication step.
+
+    :param priceframe: Unusual price dataframe, must have columns "Currency" and "Value"
+    :param allprice: Full unprocessed price object
+    :return: USD-converted unusual price dataframe
+    """
+
+    # avoid overwriting existing frame
+    priceframe = priceframe.copy()
+
+    # metal per key:
+    keyprice = allprice['Mann Co. Supply Crate Key']['prices']['6']['Tradable']['Craftable'][0]['value']
+    # dollars per metal:
+    metalprice = allprice['Refined Metal']['prices']['6']['Tradable']['Craftable'][0]['value']
+
+    keyinds = priceframe['Currency'] == 'keys'
+    priceframe.loc[keyinds, 'Value'] = priceframe.loc[keyinds, 'Value'] * (keyprice * metalprice)
+    # No unusual items are priced using currencies other than keys or USD so far, and I assume
+    # that will continue. Possible failure point.
+    priceframe = priceframe.drop(columns='Currency')
+
+    return priceframe
+
+
+# Detect stored price files (starts from most recent, don't need to flip)
+fnames = os.listdir('Data')
+# TODO OPTIONAL: Move filename format below to a config file
+rawnameformat = 'Backpack_spreadsheet_'
+# Keep filenames that match the raw file storage format
+fnames = [name for name in fnames if name[:len(rawnameformat)] == rawnameformat]
+# Sort from most to least recent (largest to smallest)
+fnames.sort(reverse=True)
+
+# Initialize dataframe
+orig_pricedf = pd.DataFrame()
+
+# Loop through files:
+for fname in fnames:
+    # Load in example file.
+    pricedf, allprices = price_loader(fname)
+    pricedf = convert_values(pricedf, allprices)
+
+    # Data filter: Drop all items that start with "Taunt:", their pricing is fundamentally
+    # different from the pricing for other permanently-active unusuals. There's no overlap
+    # since item names and effect numbers do not match between the two, but they do have a
+    # different price distribution.
+    nontauntinds = pricedf['Itemname'].transform(lambda x: 'Taunt:' not in x)
+    pricedf = pricedf[nontauntinds]
+
+    # Note: Values are not identical between files, even when item has not been repriced,
+    # because changing key and metal values cause variation in USD price estimates.
+
+    # Tack on new prices to the end of the dataframe
+    pricedf = pd.concat([orig_pricedf, pricedf])
+    # Remove duplicate pricing events, keeping most recent (uses current key -> dollar conversion)
+    pricedf = pricedf.drop_duplicates(subset=['Itemname', 'Effectnum', 'Unixtime'], keep='first')
+
+    # reinitialize
+    orig_pricedf = pricedf.copy()
+
+# Note: File will error out if no saved files exist, this is fine.
+
+# MANUAL FILTER: Looks like at least one taunt is not labeled, "Shred Alert". Going to
+# trim manually based on unusual effect, since taunt effects are numbered 3000+
+pricedf = pricedf[pricedf['Effectnum'].astype(int) < 3000]
+
+# Store the resulting dataframe
+pricedf.to_csv(os.path.join('Data', 'Price_event_dataframe.csv'), index=False)
