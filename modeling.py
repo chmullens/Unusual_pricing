@@ -143,6 +143,10 @@ outdf_all = pd.merge(outdf1, outdf2[['Value_ln_pred','TrTest']],
 outdf_all = pd.merge(outdf_all, outdf3[['Value_ln_pred','TrTest']],
                      how='left', left_index=True, right_index=True, suffixes=('','_v3'))
 
+# Store out the reworked dataframe
+outdf_all.to_csv(os.path.join('Data', 'Price_event_modeling.csv'), index=False)
+
+# Initial model testing
 matched_data = outdf_all[
     (outdf_all['TrTest'] == 'test') &
     (outdf_all['TrTest'] == outdf_all['TrTest_v2']) &
