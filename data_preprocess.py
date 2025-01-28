@@ -104,21 +104,15 @@ def convert_values(priceframe, allprice):
     keyinds = priceframe['Currency'] == 'keys'
     priceframe.loc[keyinds, 'Value'] = priceframe.loc[keyinds, 'Value'] * (keyprice * metalprice)
 
-    # UPDATE: Leaving Currency column in for future debugging if needed
-
-    # # No unusual items are priced using currencies other than keys or USD so far, and I assume
-    # # that will continue. Possible failure point.
-    # priceframe = priceframe.drop(columns='Currency')
-
     return priceframe
 
 
 # Detect stored price files (starts from most recent, don't need to flip)
 fnames = os.listdir('Data')
 # TODO OPTIONAL: Move filename format below to a config file
-rawnameformat = 'Backpack_spreadsheet_'
+rawdataname = 'Backpack_spreadsheet_'
 # Keep filenames that match the raw file storage format
-fnames = [name for name in fnames if name[:len(rawnameformat)] == rawnameformat]
+fnames = [name for name in fnames if name[:len(rawdataname)] == rawdataname]
 # Sort from most to least recent (largest to smallest)
 fnames.sort(reverse=True)
 

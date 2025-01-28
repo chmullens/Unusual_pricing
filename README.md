@@ -2,7 +2,7 @@
  
 This project will focus on estimating appropriate pricing for virtual items in the Team 
 Fortress 2 video game, which has one of the oldest existing game item trading economies. 
-This is a 10-hour timeboxed project. 
+This is a 10-hour timeboxed project. Any additional work is kept outside main branch.
 
 ### Background:
 
